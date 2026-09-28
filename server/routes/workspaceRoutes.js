@@ -5,6 +5,7 @@ const {
   getMyWorkspaces,
   getWorkspaceById,
   updateWorkspace,
+  deleteWorkspace,
 } = require("../controllers/workspaceController");
 
 const {
@@ -16,7 +17,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Create workspace
+// CREATE WORKSPACE
 router.post("/", authMiddleware, async (req, res) => {
   const validation = createWorkspaceSchema.safeParse(req.body);
 
@@ -32,13 +33,13 @@ router.post("/", authMiddleware, async (req, res) => {
   await createWorkspace(req, res);
 });
 
-// Get all workspaces for logged-in user
+// GET ALL WORKSPACES
 router.get("/", authMiddleware, getMyWorkspaces);
 
-// Get one workspace by ID
+// GET ONE WORKSPACE BY ID
 router.get("/:id", authMiddleware, getWorkspaceById);
 
-// Update workspace
+// UPDATE WORKSPACE
 router.put("/:id", authMiddleware, async (req, res) => {
   const validation = updateWorkspaceSchema.safeParse(req.body);
 
@@ -54,4 +55,9 @@ router.put("/:id", authMiddleware, async (req, res) => {
   await updateWorkspace(req, res);
 });
 
+// DELETE WORKSPACE
+router.delete("/:id", authMiddleware, deleteWorkspace);
+
 module.exports = router;
+
+

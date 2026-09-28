@@ -1,5 +1,6 @@
 const db = require("../config/db");
 
+// CREATE WORKSPACE
 const createWorkspace = async (req, res) => {
   let connection;
 
@@ -11,7 +12,6 @@ const createWorkspace = async (req, res) => {
 
     await connection.beginTransaction();
 
-    // Create workspace
     const [workspaceResult] = await connection.query(
       `INSERT INTO workspaces (name, owner_id)
        VALUES (?, ?)`,
@@ -20,7 +20,6 @@ const createWorkspace = async (req, res) => {
 
     const workspaceId = workspaceResult.insertId;
 
-    // Add the workspace owner as a workspace member
     await connection.query(
       `INSERT INTO workspace_members (
         workspace_id,
@@ -58,6 +57,7 @@ const createWorkspace = async (req, res) => {
   }
 };
 
+// GET ALL WORKSPACES FOR LOGGED-IN USER
 const getMyWorkspaces = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -93,6 +93,7 @@ const getMyWorkspaces = async (req, res) => {
   }
 };
 
+// GET ONE WORKSPACE BY ID
 const getWorkspaceById = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -135,14 +136,13 @@ const getWorkspaceById = async (req, res) => {
   }
 };
 
+// UPDATE WORKSPACE
 const updateWorkspace = async (req, res) => {
   try {
     const userId = req.user.id;
     const workspaceId = req.params.id;
     const { name } = req.body;
 
-    // Check whether the workspace exists
-    // and whether the logged-in user is the owner
     const [workspaces] = await db.query(
       `
       SELECT id, owner_id
@@ -166,7 +166,6 @@ const updateWorkspace = async (req, res) => {
       });
     }
 
-    // Update workspace name
     await db.query(
       `
       UPDATE workspaces
@@ -193,9 +192,66 @@ const updateWorkspace = async (req, res) => {
   }
 };
 
+// DELETE WORKSPACE
+const deleteWorkspace = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const workspaceId = req.params.id;
+
+    // Find workspace
+    const [workspaces] = await db.query(
+      `
+      SELECT id, name, owner_id
+      FROM workspaces
+      WHERE id = ?
+      `,
+      [workspaceId]
+    );
+
+    if (workspaces.length === 0) {
+      return res.status(404).json({
+        message: "Workspace not found",
+      });
+    }
+
+    const workspace = workspaces[0];
+
+    // Only owner can delete workspace
+    if (workspace.owner_id !== userId) {
+      return res.status(403).json({
+        message: "Only the workspace owner can delete this workspace",
+      });
+    }
+
+    // Delete workspace
+    await db.query(
+      `
+      DELETE FROM workspaces
+      WHERE id = ?
+      `,
+      [workspaceId]
+    );
+
+    res.status(200).json({
+      message: "Workspace deleted successfully",
+      workspace: {
+        id: Number(workspaceId),
+        name: workspace.name,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Server error while deleting workspace",
+    });
+  }
+};
+
 module.exports = {
   createWorkspace,
   getMyWorkspaces,
   getWorkspaceById,
   updateWorkspace,
+  deleteWorkspace,
 };
