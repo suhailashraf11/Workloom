@@ -3,6 +3,7 @@ const express = require("express");
 const {
   signup,
   login,
+  getProfile,
 } = require("../controllers/authController");
 
 const {
@@ -10,44 +11,60 @@ const {
   loginSchema,
 } = require("../validators/authValidator");
 
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
-router.post("/signup", async (req, res, next) => {
-  try {
-    const validatedData = signupSchema.parse(req.body);
 
-    req.body = validatedData;
+// ==============================
+// SIGNUP ROUTE
+// ==============================
 
-    await signup(req, res);
-  } catch (error) {
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: error.issues,
-      });
-    }
+router.post("/signup", async (req, res) => {
+  const validation = signupSchema.safeParse(req.body);
 
-    next(error);
+  if (!validation.success) {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: validation.error.issues,
+    });
   }
+
+  req.body = validation.data;
+
+  await signup(req, res);
 });
 
-router.post("/login", async (req, res, next) => {
-  try {
-    const validatedData = loginSchema.parse(req.body);
 
-    req.body = validatedData;
+// ==============================
+// LOGIN ROUTE
+// ==============================
 
-    await login(req, res);
-  } catch (error) {
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: error.issues,
-      });
-    }
+router.post("/login", async (req, res) => {
+  const validation = loginSchema.safeParse(req.body);
 
-    next(error);
+  if (!validation.success) {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: validation.error.issues,
+    });
   }
+
+  req.body = validation.data;
+
+  await login(req, res);
 });
+
+
+// ==============================
+// PROTECTED PROFILE ROUTE
+// ==============================
+
+router.get(
+  "/profile",
+  authMiddleware,
+  getProfile
+);
+
 
 module.exports = router;
