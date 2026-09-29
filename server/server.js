@@ -4,8 +4,10 @@ const express = require("express");
 const cors = require("cors");
 
 const db = require("./config/db");
+
 const authRoutes = require("./routes/authRoutes");
 const workspaceRoutes = require("./routes/workspaceRoutes");
+const memberRoutes = require("./routes/memberRoutes");
 
 const app = express();
 
@@ -16,6 +18,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
+app.use("/api/workspaces", memberRoutes);
 
 // Basic backend test
 app.get("/", (req, res) => {
