@@ -22,23 +22,24 @@ The system supports three workspace roles:
 
 ---
 
-## 2. Roles
-
-### Owner
-
-The workspace owner has the highest level of workspace permission.
+## 2. Owner Role
 
 Owner can:
 
-- View members
+- View workspace members
 - Add members
 - Change member roles
-- Remove members
+- Remove normal members
 - Remove admins
 
-The owner cannot be removed using the normal member removal API.
+Owner protection:
 
-### Admin
+- Owner cannot be removed through the member removal API.
+- Owner role cannot be changed through the member role API.
+
+---
+
+## 3. Admin Role
 
 Admin can:
 
@@ -52,7 +53,9 @@ Admin cannot:
 - Remove workspace owner
 - Remove another admin
 
-### Member
+---
+
+## 4. Member Role
 
 Member can:
 
@@ -66,43 +69,35 @@ Member cannot:
 
 ---
 
-## 3. Add Member
+## 5. Add Member API
 
 Endpoint:
 
 POST /api/workspaces/:workspaceId/members
 
-Request body:
+Example body:
 
 {
   "email": "user@example.com"
 }
 
-The user must already have a registered CollabFlow account.
-
-The API checks:
+The backend checks:
 
 1. JWT authentication
-2. Workspace permission
+2. Workspace role
 3. User exists
-4. User is not already a workspace member
-5. User is inserted with role "member"
+4. User is not already a member
+5. Adds user with role "member"
 
 ---
 
-## 4. Get Workspace Members
+## 6. Get Workspace Members
 
 Endpoint:
 
 GET /api/workspaces/:workspaceId/members
 
-Any user who belongs to the workspace can view the workspace member list.
-
-The API joins:
-
-workspace_members
-+
-users
+Any workspace member can view the workspace team.
 
 Returned information includes:
 
@@ -114,54 +109,56 @@ Returned information includes:
 
 ---
 
-## 5. Update Member Role
+## 7. Update Member Role
 
 Endpoint:
 
 PUT /api/workspaces/:workspaceId/members/:userId/role
 
-Example request:
+Example:
 
 {
   "role": "admin"
 }
 
-Only the workspace owner can change roles.
+Only the workspace owner can change member roles.
 
-Allowed role values:
+Allowed roles:
 
 - admin
 - member
 
-The owner's role cannot be changed using this API.
-
 ---
 
-## 6. Remove Member
+## 8. Remove Member
 
 Endpoint:
 
 DELETE /api/workspaces/:workspaceId/members/:userId
 
-Owner can remove members and admins.
+Rules:
 
-Admin can remove normal members.
-
-Admin cannot remove another admin.
-
-Nobody can remove the workspace owner using this endpoint.
+- Owner can remove members
+- Owner can remove admins
+- Admin can remove normal members
+- Admin cannot remove another admin
+- Admin cannot remove owner
+- Member cannot remove users
+- Owner cannot be removed
 
 ---
 
-## 7. Duplicate Member Protection
+## 9. Duplicate Member Protection
 
-Before inserting a workspace member, the backend checks:
+The backend checks:
 
 workspace_id
 +
 user_id
 
-If the membership already exists:
+before adding a member.
+
+If the user already belongs to the workspace:
 
 409 Conflict
 
@@ -169,43 +166,23 @@ is returned.
 
 ---
 
-## 8. Role-Based Access Control
+## 10. Role-Based Access Control
 
-A middleware was created:
+Middleware created:
 
 workspaceRoleMiddleware.js
 
-It checks the logged-in user's role from the workspace_members table.
+It checks the current workspace role from the workspace_members table.
 
-The middleware allows:
+Roles used:
 
-owner
-or
-admin
-
-for protected team management operations.
+- owner
+- admin
+- member
 
 ---
 
-## 9. Authentication and Authorization
-
-Authentication answers:
-
-Who is the user?
-
-JWT authentication provides:
-
-req.user.id
-
-Authorization answers:
-
-What is the user allowed to do?
-
-Workspace roles determine permissions.
-
----
-
-## 10. Files Added
+## 11. Files Added
 
 server/controllers/memberController.js
 
@@ -217,7 +194,7 @@ server/middleware/workspaceRoleMiddleware.js
 
 ---
 
-## 11. APIs Completed
+## 12. APIs Completed
 
 POST /api/workspaces/:workspaceId/members
 
@@ -229,44 +206,40 @@ DELETE /api/workspaces/:workspaceId/members/:userId
 
 ---
 
-## 12. Testing Completed
+## 13. Testing Completed
 
-- Owner can add member
-- Admin can add member
-- Member cannot add member
-- Workspace members can view team
-- Owner can change member roles
-- Member cannot change roles
+- Owner can add members
+- Admin can add members
+- Member cannot add members
+- Workspace members can view members
+- Owner can change roles
 - Admin cannot change roles
-- Owner can remove member
-- Admin can remove normal member
-- Member cannot remove member
+- Member cannot change roles
+- Owner can remove members
+- Admin can remove normal members
+- Member cannot remove members
 - Admin cannot remove owner
 - Admin cannot remove another admin
 - Owner cannot be removed
 - Duplicate members are blocked
-- JWT protected endpoints tested
+- JWT protection tested
 
 ---
 
-## 13. Concepts Learned
+## 14. Concepts Learned
 
 - Role-Based Access Control
 - Authentication
 - Authorization
 - Middleware
 - JWT
-- Route parameters
 - SQL JOIN
-- INSERT
-- UPDATE
-- DELETE
 - Membership relationships
-- Permission checks
+- Route parameters
+- Zod validation
 - HTTP 403
 - HTTP 404
 - HTTP 409
-- Zod validation
 
 ---
 
