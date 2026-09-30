@@ -8,6 +8,7 @@ const db = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const workspaceRoutes = require("./routes/workspaceRoutes");
 const memberRoutes = require("./routes/memberRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/workspaces", memberRoutes);
+app.use("/api/workspaces", projectRoutes);
 
 // Basic backend test
 app.get("/", (req, res) => {
@@ -52,7 +54,6 @@ app.get("/api/db-test", async (req, res) => {
   }
 });
 
-// Server port
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
